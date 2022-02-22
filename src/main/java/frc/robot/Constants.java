@@ -4,8 +4,11 @@
 
 package frc.robot;
 
+import java.util.Map;
+
 import edu.wpi.first.math.util.Units;
 import frc.robot.subsystems.LimelightConfig;
+import frc.robot.util.ShootingInterpolator;
 
 /**
  * The Constants class provides a convenient place for teams to hold robot-wide numerical or boolean
@@ -26,6 +29,21 @@ public final class Constants {
   public static final class ShooterConstants {
     public static final int DEVICE_ID_SHOOTER_LEADER = 10;
     public static final int DEVICE_ID_SHOOTER_FOLLOWER = 11;
+
+    public static final double kS = 0.57831;
+    public static final double kV = 0.09430;
+    public static final double kA = 0;
+
+    public static final double kP = 0.13;
+
+    public static final int COUNTS_PER_REVOLUTION = 2048;
+
+    public static final double RAMP_RATE = 0.4;
+    public static final int CLOSED_LOOP_ERROR_RANGE = 50;
+
+    public static final ShootingInterpolator SHOOTING_INTERPOLATOR = new ShootingInterpolator(Map.ofEntries(
+      Map.entry(1d, 2d)
+    ));
   }
 
   public static final class IndexerConstants {

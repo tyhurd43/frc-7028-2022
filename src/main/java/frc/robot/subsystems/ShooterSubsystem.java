@@ -4,8 +4,16 @@
 
 package frc.robot.subsystems;
 
+import static frc.robot.Constants.ShooterConstants.CLOSED_LOOP_ERROR_RANGE;
+import static frc.robot.Constants.ShooterConstants.COUNTS_PER_REVOLUTION;
 import static frc.robot.Constants.ShooterConstants.DEVICE_ID_SHOOTER_FOLLOWER;
 import static frc.robot.Constants.ShooterConstants.DEVICE_ID_SHOOTER_LEADER;
+import static frc.robot.Constants.ShooterConstants.RAMP_RATE;
+import static frc.robot.Constants.ShooterConstants.SHOOTING_INTERPOLATOR;
+import static frc.robot.Constants.ShooterConstants.kA;
+import static frc.robot.Constants.ShooterConstants.kP;
+import static frc.robot.Constants.ShooterConstants.kS;
+import static frc.robot.Constants.ShooterConstants.kV;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.DemandType;
@@ -14,23 +22,25 @@ import com.ctre.phoenix.motorcontrol.can.TalonFXConfiguration;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonFX;
 
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
+import edu.wpi.first.wpilibj.shuffleboard.BuiltInWidgets;
+import edu.wpi.first.wpilibj.shuffleboard.ShuffleboardLayout;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class ShooterSubsystem extends SubsystemBase {
   private final WPI_TalonFX leader = new WPI_TalonFX(DEVICE_ID_SHOOTER_LEADER);
   private final WPI_TalonFX follower = new WPI_TalonFX(DEVICE_ID_SHOOTER_FOLLOWER);
 
-  private final SimpleMotorFeedforward feedforward = new SimpleMotorFeedforward(0.57831, 0.09430, 0);
+  private final SimpleMotorFeedforward feedforward = new SimpleMotorFeedforward(kS,kV, kA);
 
   public ShooterSubsystem() {
     leader.configFactoryDefault();
     follower.configFactoryDefault();
 
     var config = new TalonFXConfiguration();
-    config.slot0.kP = 0.13;
+    config.slot0.kP = kP;
     config.slot0.kI = 0;
     config.slot0.kD = 0;
-    config.closedloopRamp = 0.4;
+    config.closedloopRamp = RAMP_RATE;
     leader.configAllSettings(config);
     follower.configAllSettings(config);
 
@@ -39,6 +49,12 @@ public class ShooterSubsystem extends SubsystemBase {
 
     leader.setInverted(true);
     follower.follow(leader);
+  }
+
+  public void addDashboardWidgets(ShuffleboardLayout dashboard) {
+    dashboard.addNumber("Velocity", leader::getSelectedSensorVelocity).withWidget(BuiltInWidgets.kGraph);
+    dashboard.addNumber("Target Velocity", leader::getClosedLoopTarget);
+    dashboard.addNumber("Error", leader::getClosedLoopError).withWidget(BuiltInWidgets.kGraph);
   }
 
   /**
@@ -50,7 +66,16 @@ public class ShooterSubsystem extends SubsystemBase {
       ControlMode.Velocity, 
       speed,
       DemandType.ArbitraryFeedForward, 
-      feedforward.calculate(speed, leader.getSelectedSensorVelocity() - speed) / 2048);
+      feedforward.calculate(speed, leader.getSelectedSensorVelocity() - speed) / COUNTS_PER_REVOLUTION);
+  }
+
+  public void prepareToShoot(double distance) {
+    var speed = SHOOTING_INTERPOLATOR.interpolate(distance);
+    runShooter(speed);
+  }
+
+  public boolean isReadyToShoot() {
+    return Math.abs(leader.getClosedLoopError()) <= CLOSED_LOOP_ERROR_RANGE;
   }
 
   public void stop() {
