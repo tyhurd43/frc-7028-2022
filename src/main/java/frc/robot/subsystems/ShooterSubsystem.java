@@ -32,10 +32,12 @@ public class ShooterSubsystem extends SubsystemBase {
 
   private final SimpleMotorFeedforward feedforward = new SimpleMotorFeedforward(kS,kV, kA);
 
+  private double targetSpeed = 0;
+
   public ShooterSubsystem() {
     leader.configFactoryDefault();
     follower.configFactoryDefault();
-
+    
     var config = new TalonFXConfiguration();
     config.slot0.kP = kP;
     config.slot0.kI = 0;
@@ -43,7 +45,9 @@ public class ShooterSubsystem extends SubsystemBase {
     config.closedloopRamp = RAMP_RATE;
     leader.configAllSettings(config);
     follower.configAllSettings(config);
-
+    
+    leader.enableVoltageCompensation(true);
+    follower.enableVoltageCompensation(true);
     leader.setNeutralMode(NeutralMode.Coast);
     follower.setNeutralMode(NeutralMode.Coast);
 
@@ -62,6 +66,7 @@ public class ShooterSubsystem extends SubsystemBase {
    * @param speed velocity set point
    */
   public void runShooter(double speed) {
+    targetSpeed = speed;
     leader.set(
       ControlMode.Velocity, 
       speed,
@@ -75,7 +80,7 @@ public class ShooterSubsystem extends SubsystemBase {
   }
 
   public boolean isReadyToShoot() {
-    return Math.abs(leader.getClosedLoopError()) <= CLOSED_LOOP_ERROR_RANGE;
+    return Math.abs(leader.getSelectedSensorVelocity() - targetSpeed) <= CLOSED_LOOP_ERROR_RANGE;
   }
 
   public void stop() {

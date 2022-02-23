@@ -51,6 +51,8 @@ public class ShootCommand extends CommandBase {
       if (shooterSubsystem.isReadyToShoot()) {
         // TODO do we want to make sure the target is currently visible before shooting?
         indexerSubsystem.shoot();
+      } else {
+        indexerSubsystem.stop();
       }
     } else {
       // No target has ever been visible, so stop

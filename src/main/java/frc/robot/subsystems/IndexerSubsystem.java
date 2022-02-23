@@ -14,7 +14,6 @@ public class IndexerSubsystem extends SubsystemBase {
   public IndexerSubsystem() {
     indexer.configFactoryDefault();
     indexer.setNeutralMode(NeutralMode.Coast);
-    indexer.setInverted(true);
   }
 
   public void load() {
@@ -26,7 +25,7 @@ public class IndexerSubsystem extends SubsystemBase {
   }
 
   public void shoot() {
-    indexer.set(.65);
+    indexer.set(.4);
   }
 
   public void stop() {
